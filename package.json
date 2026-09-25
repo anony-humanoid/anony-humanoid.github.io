@@ -1,0 +1,12 @@
+{
+  "name": "omniclonepages",
+  "version": "1.0.0",
+  "description": "Project page for OmniClone, a whole-body humanoid teleoperation system.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "type": "commonjs"
+}
