@@ -1,471 +1,353 @@
 <!DOCTYPE html>
-<html lang="en" class="overflow-x-hidden">
-
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OmniClone: Engineering a Robust, All-Rounder Whole-Body Humanoid Teleoperation System</title>
-    <!-- Use Tailwind CSS but overridden heavily by custom CSS variables -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Include Lucide icons for UI controls -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="style.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        themeText: 'var(--text)',
-                        themeTextSoft: 'var(--text-soft)',
-                        themeBg: 'var(--bg)',
-                        themeBgSoft: 'var(--bg-soft)',
-                        themeLine: 'var(--line)',
-                        themeCard: 'var(--card)',
-                        themeAmber: 'var(--amber)',
-                    }
-                }
-            }
-        }
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f5ef">
+<meta name="description" content="OmniClone: A Robust, All-Around Whole-Body Humanoid Teleoperation System. Explore OmniBench, real-world demonstrations, and learning from demonstrations. Read the paper and supplementary material.">
+<meta property="og:title" content="OmniClone — Whole-body control. Human intuition.">
+<meta property="og:description" content="One tracking policy for real-time teleoperation, generated motions, and autonomous execution. Read the paper and explore the demonstrations.">
+<meta property="og:type" content="website">
+<title>OmniClone: A Robust, All-Around Whole-Body Humanoid Teleoperation System</title>
+<link rel="icon" href="resources/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<script src="script.js" defer>
+</script>
 </head>
-
-<body class="selection:bg-amber-200 selection:text-themeText text-themeText">
-    <!-- Loading Screen -->
-    <div id="loading-screen"
-        class="fixed inset-0 z-[100] bg-[#fdf9f1] flex flex-col items-center justify-center transition-opacity duration-500 ease-out">
-        <div class="flex flex-col items-center justify-center space-y-4">
-            <i data-lucide="loader-2"
-                class="w-10 h-10 sm:w-12 sm:h-12 text-amber-500 animate-[spin_1.5s_linear_infinite]"></i>
-            <h2 class="text-sm sm:text-base font-bold font-['Space_Grotesk'] tracking-[0.2em] text-[#6b665c] uppercase">
-                Loading OmniClone</h2>
-        </div>
-    </div>
-
-    <div class="w-full max-w-[100vw]">
-
-        <!-- Floating Related Projects (Top Right) -->
-
-        <div class="flex flex-col md:flex-row max-w-[1536px] mx-auto w-full relative items-start">
-
-            <!-- Left Column: Explicit TOC Area (Visible on md+) -->
-            <aside
-                class="hidden md:flex w-[180px] xl:w-[240px] shrink-0 sticky top-0 h-screen max-h-screen overflow-y-auto bg-themeBg/40 z-40 flex-col justify-center">
-                <div class="p-6 xl:p-8 w-full">
-                    <h3
-                        class="text-xs font-bold uppercase tracking-widest text-themeTextSoft mb-6 font-['Space_Grotesk'] flex items-center gap-2 border-b border-themeLine pb-3">
-                        <i data-lucide="list" class="w-3.5 h-3.5"></i> Contents
-                    </h3>
-                    <nav id="toc-nav"
-                        class="flex flex-col gap-4 font-['Space_Grotesk'] text-[13px] xl:text-sm pl-0 w-full relative">
-                        <!-- The active link will receive 'toc-active' class via JS -->
-                        <a href="#overview"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">Overview</a>
-                        <a href="#benchmark"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">Benchmark</a>
-                        <a href="#bodies"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">Robust
-                            Deployment</a>
-                        <a href="#environments"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">High-Fidelity
-                            Teleoperation</a>
-                        <a href="#training"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">Facilitating
-                            Autonomy Policies</a>
-                        <a href="#sim-to-real"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">Zero-Shot
-                            Motion Play</a>
-                        <a href="#pipeline"
-                            class="toc-link text-themeTextSoft font-medium hover:text-themeAmber transition-colors w-full block border-l-2 border-transparent pl-3">System
-                            Illustration</a>
-                    </nav>
-                </div>
-            </aside>
-
-            <!-- Main Content Wrapper -->
-            <div class="flex-1 w-full flex flex-col min-w-0 max-w-full">
-                <!-- Header Section -->
-                <header class="pt-8 sm:pt-12 xl:pt-24 pb-12 sm:pb-16 px-4 max-w-6xl mx-auto text-center">
-
-                    <h1
-                        class="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] xl:text-[46px] font-bold tracking-tight leading-[1.3] mb-6 sm:mb-8">
-                        OmniClone: Engineering a Robust, All-Rounder<br class="hidden sm:block">
-                        <span class="inline-block mt-2 sm:mt-4">Whole-Body Humanoid Teleoperation System</span>
-                    </h1>
-
-                    <div class="flex flex-wrap justify-center gap-4 mt-8">
-                        <a href="resources/OmniClone.pdf" target="_blank" class="theme-btn text-sm">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                            Paper
-                        </a>
-                        <a href="resources/OmniClone.pdf" target="_blank" class="theme-btn text-sm">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                            Supplementary
-                        </a>
-                    </div>
-                </header>
-
-                <main class="max-w-[1280px] mx-auto w-full px-4 sm:px-6 pb-24 space-y-32 overflow-hidden">
-
-                    <!-- Panel 1: Overview Demo -->
-                    <section id="overview" class="panel text-center scroll-mt-24">
-                        <div
-                            class="custom-video-wrapper w-full max-w-5xl mx-auto rounded-[24px] overflow-hidden flex items-center justify-center flex-col">
-                            <video id="vid-overview" src="resources/video/OmniClone_Overview.mp4" playsinline autoplay
-                                loop muted class="max-w-full h-auto mx-auto"></video>
-                            <div class="video-controls group/controls">
-                                <button
-                                    class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-4 rounded-full backdrop-blur-md"
-                                    data-target="vid-overview">
-                                    <i data-lucide="play" class="w-8 h-8 fill-current"></i>
-                                </button>
-                                <div
-                                    class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-4 px-5 py-2">
-                                    <button class="play-btn hover:text-amber-600 transition"
-                                        data-target="vid-overview"><i data-lucide="play"
-                                            class="w-4 h-4 fill-current"></i></button>
-                                    <div class="timeline w-40 sm:w-64 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden"
-                                        data-target="vid-overview">
-                                        <div class="progress h-full bg-black/80 w-0"></div>
-                                    </div>
-                                    <div class="flex items-center gap-3">
-                                        <select
-                                            class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-xs font-bold font-['Space_Grotesk'] w-10 cursor-pointer outline-none text-center text-themeText"
-                                            data-target="vid-overview">
-                                            <option value="0.5">0.5x</option>
-                                            <option value="1" selected>1.0x</option>
-                                            <option value="1.5">1.5x</option>
-                                            <option value="2">2.0x</option>
-                                        </select>
-                                        <button class="mute-btn hover:text-amber-600 transition"
-                                            data-target="vid-overview"><i data-lucide="volume-2"
-                                                class="w-4 h-4"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="mt-8 text-xl sm:text-2xl font-bold italic text-themeText px-4 leading-relaxed">
-                            Utilizing a systematic perspective to develop an affordable, robust, and versatile
-                            whole-body teleoperation system.
-                        </p>
-
-                        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto px-4 text-left">
-                            <div
-                                class="theme-card p-6 sm:p-8 rounded-[24px] border border-themeLine bg-themeCard/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-                                <h3 class="text-lg font-bold text-themeText mb-3">Benchmarking with OmniBench</h3>
-                                <p class="text-themeTextSoft text-sm leading-relaxed">We leverage OmniBench—the first
-                                    comprehensive diagnostic benchmark—to systematically evaluate humanoid whole-body
-                                    teleoperation systems and provide actionable insights for policy optimization.</p>
-                            </div>
-                            <div
-                                class="theme-card p-6 sm:p-8 rounded-[24px] border border-themeLine bg-themeCard/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-                                <h3 class="text-lg font-bold text-themeText mb-3">Bias Identification &amp;
-                                    Optimization</h3>
-                                <p class="text-themeTextSoft text-sm leading-relaxed">We identify and mitigate system
-                                    biases introduced by retargeting and hardware fluctuations, resulting in a refined,
-                                    high-stability teleoperation framework.</p>
-                            </div>
-                            <div
-                                class="theme-card p-6 sm:p-8 rounded-[24px] border border-themeLine bg-themeCard/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow">
-                                <h3 class="text-lg font-bold text-themeText mb-3">Robust Teleoperation System</h3>
-                                <p class="text-themeTextSoft text-sm leading-relaxed">We introduce a Transformer-based
-                                    model integrated with these optimizations, providing a robust, affordable, and
-                                    easily reproducible system for high-fidelity humanoid control.</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Panel 2: Robust Deployment to Various Human Bodies -->
-                    <section id="bodies" class="panel max-w-full relative px-0 sm:px-6 text-center scroll-mt-24">
-                        <h2 class="text-3xl sm:text-4xl font-bold mb-4 px-4 sm:px-0">Robust Deployment Across Diverse
-                            Human
-                            Body Shapes</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">OmniClone enables stable, whole-body teleoperation
-                            across a wide
-                            range of operator heights, from 147cm to 194cm.</p>
-
-                        <div
-                            class="carousel-container relative w-full overflow-hidden cursor-grab active:cursor-grabbing pb-[70px]">
-                            <div class="carousel-track flex gap-4 lg:gap-6 px-[5%] sm:px-0 mt-2">
-                                <script>
-                                    const heights = [147, 154, 165, 175, 182, 194];
-                                    heights.forEach((h, i) => {
-                                        let id = 'bodyvid-' + i;
-                                        document.write(`
-                                        <div class="carousel-item flex-shrink-0 w-auto max-w-[85vw] sm:max-w-none relative group flex flex-col items-center justify-center p-2 pt-3">
-                                            <div class="custom-video-wrapper w-full rounded-[24px] overflow-hidden flex items-center justify-center flex-col shadow-sm">
-                                                <video id="${id}" class="carousel-vid max-w-[100%] max-h-[55vh] h-auto mx-auto" src="resources/video/${h}cm.mp4" loop muted playsinline autoplay></video>
-                                                <div class="video-controls group/controls">
-                                                    <button class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-3 sm:p-4 rounded-full backdrop-blur-md" data-target="${id}">
-                                                        <i data-lucide="play" class="w-6 h-6 sm:w-8 sm:h-8 fill-current"></i>
-                                                    </button>
-                                                    <div class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-1.5 sm:py-2">
-                                                        <button class="play-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="play" class="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current"></i></button>
-                                                        <div class="timeline w-24 sm:w-32 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden" data-target="${id}">
-                                                            <div class="progress h-full bg-black/80 w-0"></div>
-                                                        </div>
-                                                        <div class="flex items-center gap-1 sm:gap-3">
-                                                            <select class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-[10px] sm:text-xs font-bold font-['Space_Grotesk'] w-8 sm:w-10 cursor-pointer outline-none text-center text-themeText" data-target="${id}">
-                                                                <option value="0.5">0.5x</option>
-                                                                <option value="1" selected>1.0x</option>
-                                                                <option value="1.5">1.5x</option>
-                                                                <option value="2">2.0x</option>
-                                                            </select>
-                                                            <button class="mute-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="volume-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-4 mb-1 text-sm font-bold text-themeText font-['Space_Grotesk']">${h} cm</div>
-                                        </div>
-                                        `);
-                                    });
-                                </script>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Panel 3: Dextrous Manipulation -->
-                    <section id="environments" class="panel text-center scroll-mt-24 px-4 sm:px-0">
-                        <h2 class="text-3xl sm:text-4xl font-bold mb-4">High-Fidelity Long-Horizon Teleoperation</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">Demonstrating high-fidelity dextrous manipulation
-                            across long-term
-                            interactions and different household settings.</p>
-                        <div
-                            class="carousel-container relative w-full overflow-hidden cursor-grab active:cursor-grabbing pb-[70px]">
-                            <div class="carousel-track flex gap-4 lg:gap-6 px-[5%] sm:px-0 mt-2">
-                                <script>
-                                    const dexVideos = [
-                                        { src: 'long_term.mp4', label: 'Mastering Long-Horizon Tasks: From Articulated Manipulation to Coordinated Loco-Manipulation' },
-                                        { src: 'unpack_bag.mp4', label: 'Robust Execution of Intricate Tasks: Dexterous and Deformable Manipulation during Bag Unpacking.' },
-                                        { src: 'open_fridge.mp4', label: 'Robust High-Torque Execution: High-Force Interaction and Contact Stability during Heavy Door Operation.' },
-                                        { src: 'pourwater.mp4', label: 'Coordinated Bimanual Control: Achieving Stable, High-Fidelity Manipulation in Complex Tasks.' }
-                                    ];
-                                    dexVideos.forEach((v, i) => {
-                                        let id = 'dexvid-' + i;
-                                        document.write(`
-                                        <div class="carousel-item flex-shrink-0 w-auto max-w-[85vw] sm:max-w-none relative group flex flex-col items-center justify-center p-2 pt-3">
-                                            <div class="custom-video-wrapper w-full rounded-[24px] overflow-hidden flex items-center justify-center flex-col shadow-sm">
-                                                <video id="${id}" class="carousel-vid max-w-[100%] max-h-[55vh] h-auto mx-auto" src="resources/video/${v.src}" loop muted playsinline autoplay></video>
-                                                <div class="video-controls group/controls">
-                                                    <button class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-3 sm:p-4 rounded-full backdrop-blur-md" data-target="${id}">
-                                                        <i data-lucide="play" class="w-6 h-6 sm:w-8 sm:h-8 fill-current"></i>
-                                                    </button>
-                                                    <div class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-1.5 sm:py-2">
-                                                        <button class="play-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="play" class="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current"></i></button>
-                                                        <div class="timeline w-24 sm:w-32 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden" data-target="${id}">
-                                                            <div class="progress h-full bg-black/80 w-0"></div>
-                                                        </div>
-                                                        <div class="flex items-center gap-1 sm:gap-3">
-                                                            <select class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-[10px] sm:text-xs font-bold font-['Space_Grotesk'] w-8 sm:w-10 cursor-pointer outline-none text-center text-themeText" data-target="${id}">
-                                                                <option value="0.5">0.5x</option>
-                                                                <option value="1" selected>1.0x</option>
-                                                                <option value="1.5">1.5x</option>
-                                                                <option value="2">2.0x</option>
-                                                            </select>
-                                                            <button class="mute-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="volume-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-4 mb-1 text-sm font-bold text-themeText font-['Space_Grotesk']">${v.label}</div>
-                                        </div>
-                                        `);
-                                    });
-                                </script>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Panel 4: Autonomy Policy Training -->
-                    <section id="training" class="panel text-center scroll-mt-24">
-                        <h2 class="text-3xl font-bold mb-4">Autonomy Policy Trained via OmniClone Demonstrations</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">Generating high-quality expert trajectories for
-                            autonomy policy training (e.g., Gr00T N1.6) using only 50-demonstrations.</p>
-
-                        <div
-                            class="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch justify-center w-full max-w-6xl mx-auto md:h-[350px] lg:h-[400px]">
-                            <!-- Squat Video -->
-                            <div
-                                class="flex flex-col items-center justify-center w-full md:w-auto h-auto md:h-full shrink-0">
-                                <div
-                                    class="custom-video-wrapper w-full md:w-auto md:h-[calc(100%-3rem)] rounded-[24px] overflow-hidden relative flex items-center justify-center flex-col shrink-0">
-                                    <video id="vid-auto-squat" src="resources/video/autonomy_squat.mp4" playsinline
-                                        autoplay loop muted
-                                        class="w-full h-auto md:h-full md:w-auto max-w-[100%] mx-auto"></video>
-                                    <div class="video-controls group/controls">
-                                        <button
-                                            class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-4 rounded-full backdrop-blur-md"
-                                            data-target="vid-auto-squat">
-                                            <i data-lucide="play" class="w-8 h-8 fill-current"></i>
-                                        </button>
-                                        <div
-                                            class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-4 px-5 py-2">
-                                            <button class="play-btn hover:text-amber-600 transition"
-                                                data-target="vid-auto-squat"><i data-lucide="play"
-                                                    class="w-4 h-4 fill-current"></i></button>
-                                            <div class="timeline w-24 sm:w-40 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden"
-                                                data-target="vid-auto-squat">
-                                                <div class="progress h-full bg-black/80 w-0"></div>
-                                            </div>
-                                            <div class="flex items-center gap-2 sm:gap-3">
-                                                <select
-                                                    class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-xs font-bold font-['Space_Grotesk'] w-10 cursor-pointer outline-none text-center text-themeText"
-                                                    data-target="vid-auto-squat">
-                                                    <option value="0.5">0.5x</option>
-                                                    <option value="1" selected>1.0x</option>
-                                                    <option value="1.5">1.5x</option>
-                                                    <option value="2">2.0x</option>
-                                                </select>
-                                                <button class="mute-btn hover:text-amber-600 transition"
-                                                    data-target="vid-auto-squat"><i data-lucide="volume-2"
-                                                        class="w-4 h-4"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-4 mb-1 text-sm font-bold text-themeText font-['Space_Grotesk']">
-                                    Whole-body Pick-and-Place</div>
-                            </div>
-
-                            <!-- 8x Speed Video -->
-                            <div
-                                class="flex flex-col items-center justify-center w-full md:w-auto h-auto md:h-full shrink-0">
-                                <div
-                                    class="custom-video-wrapper w-full md:w-auto md:h-[calc(100%-3rem)] rounded-[24px] overflow-hidden relative flex items-center justify-center flex-col shrink-0">
-                                    <video id="vid-auto" src="resources/video/autonomy_8x.mp4" playsinline autoplay loop
-                                        muted class="w-full h-auto md:h-full md:w-auto max-w-[100%] mx-auto"></video>
-                                    <div class="video-controls group/controls">
-                                        <button
-                                            class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-4 rounded-full backdrop-blur-md"
-                                            data-target="vid-auto">
-                                            <i data-lucide="play" class="w-8 h-8 fill-current"></i>
-                                        </button>
-                                        <div
-                                            class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-4 px-5 py-2">
-                                            <button class="play-btn hover:text-amber-600 transition"
-                                                data-target="vid-auto"><i data-lucide="play"
-                                                    class="w-4 h-4 fill-current"></i></button>
-                                            <div class="timeline w-24 sm:w-40 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden"
-                                                data-target="vid-auto">
-                                                <div class="progress h-full bg-black/80 w-0"></div>
-                                            </div>
-                                            <div class="flex items-center gap-2 sm:gap-3">
-                                                <select
-                                                    class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-xs font-bold font-['Space_Grotesk'] w-10 cursor-pointer outline-none text-center text-themeText"
-                                                    data-target="vid-auto">
-                                                    <option value="0.5">0.5x</option>
-                                                    <option value="1" selected>1.0x</option>
-                                                    <option value="1.5">1.5x</option>
-                                                    <option value="2">2.0x</option>
-                                                </select>
-                                                <button class="mute-btn hover:text-amber-600 transition"
-                                                    data-target="vid-auto"><i data-lucide="volume-2"
-                                                        class="w-4 h-4"></i></button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-4 mb-1 text-sm font-bold text-themeText font-['Space_Grotesk']">Tabletop
-                                    Pick-and-Place</div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Panel 5: Zero-Shot Sim-to-Real Transfer -->
-                    <section id="sim-to-real" class="panel text-center scroll-mt-24 px-4 sm:px-0">
-                        <h2 class="text-3xl sm:text-4xl font-bold mb-4">Zero-Shot Motion Play</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">Enabling zero-shot execution of diverse motions
-                            generated by HY-Motion, demonstrating a system robust to any interface.</p>
-                        <div
-                            class="carousel-container relative w-full overflow-hidden cursor-grab active:cursor-grabbing pb-[70px]">
-                            <div class="carousel-track flex gap-4 lg:gap-6 px-[5%] sm:px-0 mt-2">
-                                <script>
-                                    const simVideos = [
-                                        { src: 'run.mp4', label: 'Run' },
-                                        { src: 'jump.mp4', label: 'Jump Forward' },
-                                        { src: 'jump_in_place.MP4.mp4', label: 'Jump in Place' }
-                                    ];
-                                    simVideos.forEach((v, i) => {
-                                        let id = 'simvid-' + i;
-                                        document.write(`
-                                        <div class="carousel-item flex-shrink-0 w-auto max-w-[85vw] sm:max-w-none relative group flex flex-col items-center justify-center p-2 pt-3">
-                                            <div class="custom-video-wrapper w-full rounded-[24px] overflow-hidden flex items-center justify-center flex-col shadow-sm">
-                                                <video id="${id}" class="carousel-vid max-w-[100%] max-h-[55vh] h-auto mx-auto" src="resources/video/${v.src}" loop muted playsinline autoplay></video>
-                                                <div class="video-controls group/controls">
-                                                    <button class="center-play opacity-0 group-hover/controls:opacity-100 transition-opacity p-3 sm:p-4 rounded-full backdrop-blur-md" data-target="${id}">
-                                                        <i data-lucide="play" class="w-6 h-6 sm:w-8 sm:h-8 fill-current"></i>
-                                                    </button>
-                                                    <div class="video-floating-bar opacity-0 group-hover/controls:opacity-100 transition-opacity flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-1.5 sm:py-2">
-                                                        <button class="play-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="play" class="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current"></i></button>
-                                                        <div class="timeline w-24 sm:w-32 h-1.5 bg-black/10 rounded-full cursor-pointer overflow-hidden" data-target="${id}">
-                                                            <div class="progress h-full bg-black/80 w-0"></div>
-                                                        </div>
-                                                        <div class="flex items-center gap-1 sm:gap-3">
-                                                            <select class="speed-btn appearance-none bg-transparent hover:text-amber-600 transition text-[10px] sm:text-xs font-bold font-['Space_Grotesk'] w-8 sm:w-10 cursor-pointer outline-none text-center text-themeText" data-target="${id}">
-                                                                <option value="0.5">0.5x</option>
-                                                                <option value="1" selected>1.0x</option>
-                                                                <option value="1.5">1.5x</option>
-                                                                <option value="2">2.0x</option>
-                                                            </select>
-                                                            <button class="mute-btn hover:text-amber-600 transition" data-target="${id}"><i data-lucide="volume-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i></button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mt-4 mb-1 text-sm font-bold text-themeText font-['Space_Grotesk']">${v.label}</div>
-                                        </div>
-                                        `);
-                                    });
-                                </script>
-                            </div>
-                    </section>
-
-                    <!-- Benchmark Panel -->
-                    <section id="benchmark" class="panel text-center scroll-mt-24 px-4 sm:px-0">
-                        <h2 class="text-3xl sm:text-4xl font-bold mb-8">Benchmark</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">OmniBench: Systematic diagnostics and actionable
-                            insights for humanoid whole-body teleoperation.</p>
-                        <div
-                            class="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 max-w-6xl mx-auto">
-                            <div class="flex flex-col items-center justify-start pr-0">
-                                <img src="resources/mpjpe_error.png" alt="MPJPE Error"
-                                    class="h-[250px] sm:h-[300px] md:h-[350px] w-auto object-contain rounded-[16px] shadow-sm bg-white/60 p-4 border border-themeLine transition-transform hover:scale-[1.02]">
-                                <p
-                                    class="mt-4 text-[13px] sm:text-sm font-bold text-themeText font-['Space_Grotesk'] text-center max-w-[300px]">
-                                    Outer rim indicates lower tracking errors
-                                </p>
-                            </div>
-                            <div class="flex justify-center items-start pl-0 -ml-4">
-                                <img src="resources/training_dataset_distribution.png"
-                                    alt="Training Dataset Distribution"
-                                    class="h-[250px] sm:h-[300px] md:h-[350px] w-auto object-contain rounded-[16px] shadow-sm bg-white/60 p-4 border border-themeLine transition-transform hover:scale-[1.02]">
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Panel 6: Pipeline Diagram -->
-                    <section id="pipeline" class="panel text-center scroll-mt-24 px-4 sm:px-0">
-                        <h2 class="text-3xl sm:text-4xl font-bold mb-8">System
-                            Illustration</h2>
-                        <p class="text-themeTextSoft mb-10 text-lg">Optimized Whole-Body Teleoperation Infrastructure:
-                            Integrating a High-Fidelity Transformer-Based Control Model.</p>
-                        <div
-                            class="theme-card p-4 sm:p-8 overflow-hidden mx-auto max-w-5xl flex items-center justify-center bg-white/60">
-                            <img src="resources/pipeline.png" alt="OmniClone Pipeline"
-                                class="w-full max-w-4xl h-auto object-contain rounded-[12px] mix-blend-multiply opacity-90 hover:opacity-100 transition-opacity mx-auto">
-                        </div>
-                    </section>
-
-
-
-            </div> <!-- End Main Content Wrapper -->
-        </div> <!-- End Flex Split Wrapper -->
-
-        <script src="script.js"></script>
-        <script>
-            lucide.createIcons();
-        </script>
-    </div>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <a class="wordmark" href="#top" aria-label="OmniClone home">
+<span class="brand-symbol" aria-hidden="true">✳</span> OmniClone<span class="wordmark-dot">.</span>
+</a>
+  <nav aria-label="Main navigation">
+<a href="#research">Research</a>
+<a href="#demonstrations">In action</a>
+<a href="#system">The system</a>
+</nav>
+  <a class="nav-paper" href="resources/RAL27_OmniClone.pdf" target="_blank" rel="noopener">Read the paper <span aria-hidden="true">↗</span>
+</a>
+</header>
+<main id="main">
+<section class="hero wrap" id="top" aria-labelledby="hero-title">
+  <div class="hero-meta">
+<span class="eyebrow">
+<span class="status-dot">
+</span> Whole-body humanoid teleoperation</span>
+<span class="eyebrow hero-index">Research project / 2026</span>
+</div>
+  <h1 id="hero-title">OmniClone<span>.</span>
+</h1>
+  <div class="hero-intro">
+<h2>Whole-body control.<br>Human intuition.</h2>
+<div class="hero-description">
+<p>A Robust, All-Around Whole-Body Humanoid Teleoperation System.</p>
+<p class="muted">From agile movement to delicate manipulation. One tracking policy connects human motion, generated references, and autonomous execution.</p>
+<div class="actions">
+<a class="button button-primary" href="resources/RAL27_OmniClone.pdf" target="_blank" rel="noopener">Read paper <span aria-hidden="true">↗</span>
+</a>
+<a class="button button-outline" href="resources/RAL27_OmniClone_supp.pdf" target="_blank" rel="noopener">Supplement <span aria-hidden="true">↗</span>
+</a>
+</div>
+</div>
+</div>
+  <figure class="overview-film" id="overview">
+<video class="" controls playsinline preload="none" poster="resources/posters/overview.jpg" aria-label="OmniClone project overview" >
+<source src="resources/video/OmniClone_Overview.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/OmniClone_Overview.mp4">Download OmniClone project overview</a>.</video>
+<figcaption>
+<span>
+<span class="status-dot">
+</span> Meet OmniClone</span>
+<span>From human demonstration to robot execution <span aria-hidden="true">↗</span>
+</span>
+</figcaption>
+</figure>
+  <div class="metrics">
+<div>
+<strong>39.8<span> mm</span>
+</strong>
+<p>Mean tracking error on OmniBench</p>
+</div>
+<div>
+<strong>97.8<span>%</span>
+</strong>
+<p>Mean success rate on OmniBench</p>
+</div>
+<div>
+<strong>1<span> RTX 4090</span>
+</strong>
+<p>~82 GPU-hours for the tracking policy</p>
+</div>
+</div>
+</section>
+<section class="research-section" id="research">
+<div class="wrap">
+  <div class="section-heading">
+<span class="eyebrow">01 / The research</span>
+<h2>Broad skills.<br>A practical training budget.</h2>
+<p>Skill-level evaluation turns tracking failures into concrete choices of data and design.</p>
+</div>
+  <div class="research-grid">
+<div class="research-statement">
+<span class="large-asterisk" aria-hidden="true">✳</span>
+<h3>Better diagnostics.<br>Better control.</h3>
+<p>Aggregate scores can hide a controller’s weaknesses. OmniBench evaluates six skills at three levels of workspace height or dynamic intensity, revealing where a policy needs to improve.</p>
+<a class="text-link" href="resources/RAL27_OmniClone.pdf#page=3" target="_blank" rel="noopener">Explore OmniBench in the paper <span aria-hidden="true">↗</span>
+</a>
+</div>
+<div class="research-points">
+<article>
+<span>01</span>
+<div>
+<h3>Diagnose by skill</h3>
+<p>Evaluate loco-manipulation, stationary manipulation, squatting, walking, running, and jumping on held-out generated motions.</p>
+</div>
+</article>
+<article>
+<span>02</span>
+<div>
+<h3>Refine the data and policy</h3>
+<p>Use diagnostics and hardware observations to curate 30 hours of motion data, train a Transformer teacher, and distill a Transformer student.</p>
+</div>
+</article>
+<article>
+<span>03</span>
+<div>
+<h3>Make deployment robust</h3>
+<p>Initial-frame scale calibration accommodates different operators. Buffered reference delivery handles irregular updates and interruptions.</p>
+</div>
+</article>
+</div>
+</div>
+  <div class="benchmark-note">
+<p>
+<strong>65% and 78% lower mean tracking error</strong> than GMT and TWIST2 on OmniBench. Mean error is close to SONIC (39.8 vs. 38.9 mm), with a substantially smaller reported training budget.</p>
+<p>Results are from simulation. SONIC retains higher overall success and advantages in walking and high jumps. See the paper for the full comparison and hardware evaluation.</p>
+</div>
+</div>
+</section>
+<section class="wrap section-space" id="demonstrations">
+  <div class="section-heading">
+<span class="eyebrow">02 / OmniClone in action</span>
+<h2>One policy.<br>A world of movement.</h2>
+<p>Explore real-world teleoperation and generated-motion playback, all driven by the same whole-body tracking policy.</p>
+</div>
+  <div class="filter-bar" role="group" aria-label="Filter demonstrations" hidden>
+<button class="filter active" data-filter="all" aria-pressed="true">All demonstrations <span>08</span>
+</button>
+<button class="filter" data-filter="teleoperation" aria-pressed="false">Teleoperation <span>04</span>
+</button>
+<button class="filter" data-filter="generated motion" aria-pressed="false">Generated motion <span>04</span>
+</button>
+</div>
+  <div class="demo-grid">
+<article class="demo-card" data-category="teleoperation">
+<video class="" controls playsinline preload="none" poster="resources/posters/long_term.jpg" aria-label="A task, from start to finish" loop muted>
+<source src="resources/video/long_term.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/long_term.mp4">Download A task, from start to finish</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">teleoperation</span>
+<h3>A task, from start to finish</h3>
+<p>Coordinating locomotion, posture changes, and manipulation over a long-horizon interaction.</p>
+</div>
+</article>
+<article class="demo-card" data-category="teleoperation">
+<video class="" controls playsinline preload="none" poster="resources/posters/unpack_bag.jpg" aria-label="Handling the unexpected" loop muted>
+<source src="resources/video/unpack_bag.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/unpack_bag.mp4">Download Handling the unexpected</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">teleoperation</span>
+<h3>Handling the unexpected</h3>
+<p>Dexterous interaction with deformable objects during bag unpacking.</p>
+</div>
+</article>
+<article class="demo-card" data-category="teleoperation">
+<video class="" controls playsinline preload="none" poster="resources/posters/open_fridge.jpg" aria-label="Interacting with the environment" loop muted>
+<source src="resources/video/open_fridge.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/open_fridge.mp4">Download Interacting with the environment</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">teleoperation</span>
+<h3>Interacting with the environment</h3>
+<p>Whole-body coordination during heavy door operation.</p>
+</div>
+</article>
+<article class="demo-card" data-category="teleoperation">
+<video class="" controls playsinline preload="none" poster="resources/posters/pourwater.jpg" aria-label="Precision in both hands" loop muted>
+<source src="resources/video/pourwater.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/pourwater.mp4">Download Precision in both hands</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">teleoperation</span>
+<h3>Precision in both hands</h3>
+<p>Coordinated bimanual control for pouring and liquid handling.</p>
+</div>
+</article>
+<article class="demo-card" data-category="generated motion">
+<video class="" controls playsinline preload="none" poster="resources/posters/run.jpg" aria-label="From reference to running" loop muted>
+<source src="resources/video/run.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/run.mp4">Download From reference to running</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">generated motion</span>
+<h3>From reference to running</h3>
+<p>Generated running motions executed with the same tracking policy.</p>
+</div>
+</article>
+<article class="demo-card" data-category="generated motion">
+<video class="" controls playsinline preload="none" poster="resources/posters/jump.jpg" aria-label="Taking a leap" loop muted>
+<source src="resources/video/jump.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/jump.mp4">Download Taking a leap</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">generated motion</span>
+<h3>Taking a leap</h3>
+<p>Forward jumping from a generated motion reference.</p>
+</div>
+</article>
+<article class="demo-card" data-category="generated motion">
+<video class="" controls playsinline preload="none" poster="resources/posters/jump_in_place.MP4.jpg" aria-label="Leaving the ground" loop muted>
+<source src="resources/video/jump_in_place.MP4.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/jump_in_place.MP4.mp4">Download Leaving the ground</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">generated motion</span>
+<h3>Leaving the ground</h3>
+<p>Generated jumps in place, without further policy training.</p>
+</div>
+</article>
+<article class="demo-card" data-category="generated motion">
+<video class="" controls playsinline preload="none" poster="resources/posters/run-view2.jpg" aria-label="Running, another perspective" loop muted>
+<source src="resources/video/run-view2.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/run-view2.mp4">Download Running, another perspective</a>.</video>
+<div class="demo-caption">
+<span class="eyebrow">generated motion</span>
+<h3>Running, another perspective</h3>
+<p>An additional view of dynamic motion execution.</p>
+</div>
+</article>
+</div>
+</section>
+<section class="operator-section" id="bodies">
+<div class="wrap operator-layout">
+<div class="operator-copy">
+<span class="eyebrow">Made for different operators</span>
+<h2>Different people.<br>Same policy.</h2>
+<p>Six operators, from 1.47 to 1.94 m tall, complete walking and object-placement tasks with automatic scale calibration and no per-operator policy retraining.</p>
+<div class="height-range">
+<strong>147</strong>
+<span aria-hidden="true">⟷</span>
+<strong>194<small> cm</small>
+</strong>
+</div>
+<p class="small muted">Choose an operator height to explore the demonstrations.</p>
+<div class="height-options" role="group" aria-label="Choose operator height" hidden>
+<button class="height-option active" data-height="147" aria-pressed="true">147<span> cm</span>
+</button>
+<button class="height-option " data-height="154" aria-pressed="false">154<span> cm</span>
+</button>
+<button class="height-option " data-height="165" aria-pressed="false">165<span> cm</span>
+</button>
+<button class="height-option " data-height="175" aria-pressed="false">175<span> cm</span>
+</button>
+<button class="height-option " data-height="182" aria-pressed="false">182<span> cm</span>
+</button>
+<button class="height-option " data-height="194" aria-pressed="false">194<span> cm</span>
+</button>
+</div>
+<noscript>
+<p>Operator videos: <a href="resources/video/154cm.mp4">154 cm</a> · <a href="resources/video/165cm.mp4">165 cm</a> · <a href="resources/video/175cm.mp4">175 cm</a> · <a href="resources/video/182cm.mp4">182 cm</a> · <a href="resources/video/194cm.mp4">194 cm</a>
+</p>
+</noscript>
+</div>
+<figure class="operator-video">
+<video class="" controls playsinline preload="none" poster="resources/posters/147cm.jpg" aria-label="Teleoperation by a 147 cm operator" loop muted>
+<source src="resources/video/147cm.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/147cm.mp4">Download Teleoperation by a 147 cm operator</a>.</video>
+<figcaption id="operator-caption" aria-live="polite">Operator height <strong>147 cm</strong>
+<span>Automatic scale calibration</span>
+</figcaption>
+</figure>
+</div>
+</section>
+<section class="wrap section-space" id="training">
+<div class="section-heading">
+<span class="eyebrow">03 / From demonstrations to autonomy</span>
+<h2>Human experience.<br>Autonomous action.</h2>
+<p>GR00T N1.6 is post-trained on 50 demonstrations collected with OmniClone. The same tracking policy supports both data collection and autonomous execution.</p>
+</div>
+<div class="autonomy-grid">
+<figure>
+<video class="" controls playsinline preload="none" poster="resources/posters/autonomy_squat.jpg" aria-label="Autonomous squatting pick-and-place" loop muted>
+<source src="resources/video/autonomy_squat.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/autonomy_squat.mp4">Download Autonomous squatting pick-and-place</a>.</video>
+<figcaption>
+<h3>Squatting pick-and-place</h3>
+<span>4 / 5 successful trials</span>
+</figcaption>
+</figure>
+<figure>
+<video class="" controls playsinline preload="none" poster="resources/posters/autonomy_8x.jpg" aria-label="Autonomous standing pick-and-place shown at 8 times speed" loop muted>
+<source src="resources/video/autonomy_8x.mp4" type="video/mp4">Your browser does not support embedded video. <a href="resources/video/autonomy_8x.mp4">Download Autonomous standing pick-and-place shown at 8 times speed</a>.</video>
+<figcaption>
+<h3>Standing pick-and-place</h3>
+<span>18 / 21 successful trials · video at 8×</span>
+</figcaption>
+</figure>
+</div>
+<p class="evaluation-note">Hardware evaluation covers 26 trials across these two tasks. The VLA post-training compute is separate from the tracking-policy training budget.</p>
+</section>
+<section class="system-section" id="system">
+<div class="wrap">
+<div class="section-heading">
+<span class="eyebrow">04 / Behind the movement</span>
+<h2>Designed as a system.<br>Driven by one policy.</h2>
+<p>Diagnostic evaluation, curated motion data, and a robust reference pipeline connect training to real-world control.</p>
+</div>
+<figure class="pipeline-figure">
+<a href="resources/pipeline.png" target="_blank" rel="noopener" aria-label="Open full-size OmniClone system diagram">
+<img src="resources/pipeline.png" alt="OmniClone pipeline: motion data curation, Transformer teacher-student training, OmniBench evaluation, and shared deployment infrastructure for teleoperation, generated motions, and VLA commands." loading="lazy" width="2048" height="1105">
+</a>
+<figcaption>Training and deployment infrastructure <span>Click the figure to enlarge ↗</span>
+</figcaption>
+</figure>
+<div class="system-steps">
+<article>
+<span class="eyebrow">Input</span>
+<h3>Multiple motion sources</h3>
+<p>Live human motion, HY-Motion-1.0 generated references, or VLA commands.</p>
+</article>
+<span class="step-arrow" aria-hidden="true">→</span>
+<article>
+<span class="eyebrow">Control</span>
+<h3>One Transformer policy</h3>
+<p>Whole-body tracking with calibrated, buffered reference delivery.</p>
+</article>
+<span class="step-arrow" aria-hidden="true">→</span>
+<article>
+<span class="eyebrow">Output</span>
+<h3>Coordinated robot motion</h3>
+<p>Locomotion, manipulation, and changes in posture on a humanoid robot.</p>
+</article>
+</div>
+</div>
+</section>
+<section class="wrap resources-section" id="resources">
+<span class="eyebrow">Continue exploring</span>
+<div class="resources-heading">
+<h2>The details behind<br>the demonstrations.</h2>
+<p>Read the full study and the supplementary implementation and evaluation details.</p>
+</div>
+<div class="document-grid">
+<a class="document-link" href="resources/RAL27_OmniClone.pdf" target="_blank" rel="noopener">
+<span class="document-icon" aria-hidden="true">↗</span>
+<span class="eyebrow">Research paper / PDF</span>
+<h3>OmniClone</h3>
+<p>A Robust, All-Around Whole-Body Humanoid Teleoperation System</p>
+<span class="text-link">Read the paper <span aria-hidden="true">↗</span>
+</span>
+</a>
+<a class="document-link" href="resources/RAL27_OmniClone_supp.pdf" target="_blank" rel="noopener">
+<span class="document-icon" aria-hidden="true">↗</span>
+<span class="eyebrow">Supplementary material / PDF</span>
+<h3>A closer look</h3>
+<p>Policy architecture, training details, additional ablations, and deployment protocols.</p>
+<span class="text-link">Read the supplement <span aria-hidden="true">↗</span>
+</span>
+</a>
+</div>
+</section>
+</main>
+<footer class="wrap site-footer">
+<a class="wordmark" href="#top">OmniClone<span class="wordmark-dot">.</span>
+</a>
+<span>Anonymous research submission</span>
+<a href="#top" class="back-top">Back to top ↑</a>
+</footer>
 </body>
-
 </html>

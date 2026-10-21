@@ -4,7 +4,8 @@
   "description": "Project page for OmniClone, a whole-body humanoid teleoperation system.",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "node --check script.js",
+    "preview": "python3 -m http.server 8000"
   },
   "keywords": [],
   "license": "ISC",
